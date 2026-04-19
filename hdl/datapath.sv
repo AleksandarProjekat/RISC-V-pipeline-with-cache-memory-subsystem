@@ -226,7 +226,15 @@ always_ff @(posedge clk)
                 PCPlus4_M <=PCPlus4_E;
             end
 
-L1_cache l1_data_cache(.clk(clk),.address(ALUResult_M), .load_operation(load_operation), .we(cache_write), .wd(WriteData_M), .rd(ReadData_s));
+L1_cache l1_data_cache(
+    .clk(clk), 
+    .rst(reset), 
+    .address(ALUResult_M), 
+    .load_operation(load_operation), 
+    .we(cache_write), 
+    .wd(WriteData_M), 
+    .rd(ReadData_s)
+    );
 
 ///////////////////////////////////////////////////////
 //
