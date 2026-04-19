@@ -22,6 +22,7 @@ module controller(
         output logic Flush_D,
         output logic Stall_D,
         output logic Stall_F,
+        output logic load_operation,
         
         //input to hazard unit
         input logic [11:7] rdest_W,
@@ -152,6 +153,8 @@ always_ff @(posedge clk) begin
                 ResultSrc_M <= ResultSrc_E;
             end
 end
+
+assign load_operation = (ResultSrc_M == 1);
 
 ///////////////////////////////////////////////////////
 //

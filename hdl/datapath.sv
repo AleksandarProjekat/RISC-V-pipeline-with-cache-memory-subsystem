@@ -21,6 +21,8 @@ module datapath(
     input logic Flush_D,
     input logic Stall_D,
     input logic Stall_F,
+    input logic cache_write,
+    input logic load_operation,
     //outputs to hazard unit
     output logic [11:7] rdest_W_out,
     output logic [11:7] rdest_M_out,
@@ -34,7 +36,6 @@ module datapath(
 
 
 logic [31:0] PC_out_s, PC_in_s, PCPlus4_s;
-logic [31:0] Instr_s;
 logic [31:0] ImmExt_s;
 
 
@@ -71,6 +72,8 @@ logic [31:0] ALUResult_M, WriteData_M, rdest_M, PCPlus4_M;
 
 //PIPELINE REG SIGNALS M/W
 logic [31:0] ReadData_W, rdest_W, PCPlus4_W,ALUResult_W;
+
+logic [31:0] ReadData_s;
 
 
 ///////////////////////////////////////////////////////
@@ -223,6 +226,7 @@ always_ff @(posedge clk)
                 PCPlus4_M <=PCPlus4_E;
             end
 
+L1_cache l1_data_cache(.clk(clk),.address(ALUResult_M), .load_operation(load_operation), .we(cache_write), .wd(WriteData_M), .rd(ReadData_s));
 
 ///////////////////////////////////////////////////////
 //
@@ -241,7 +245,7 @@ always_ff @(posedge clk)
             end  
             else 
             begin
-                ReadData_W <= ReadData;
+                ReadData_W <= ReadData_s;
                 rdest_W <= rdest_M; 
                 PCPlus4_W <=  PCPlus4_M;
                 ALUResult_W <= ALUResult_M;
@@ -269,7 +273,7 @@ end
 //output logic
 assign PC_out = PC_out_s;
 assign ALUResult = ALUResult_M;
-assign WriteData = WriteData_M;
+assign WriteData = 0;
 assign rdest_W_out = rdest_W;
 assign rdest_M_out = rdest_M;
 assign PCSrc_E_out =PCSelect_s;

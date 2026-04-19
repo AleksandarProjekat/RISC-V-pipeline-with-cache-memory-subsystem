@@ -27,7 +27,7 @@ module riscVpipeline(
     logic[19:15] rs1_D_s;
     logic[24:20] rs2_D_s;
     logic[1:0] ForwardA_E_s, ForwardB_E_s;
-    logic Flush_E_s, Flush_D_s,Stall_D_s,Stall_F_s;
+    logic Flush_E_s, Flush_D_s,Stall_D_s,Stall_F_s, load_operation_s;
     
 controller controller_module(
             .clk(clk),
@@ -58,7 +58,8 @@ controller controller_module(
             .Flush_E(Flush_E_s),
             .Flush_D(Flush_D_s),
             .Stall_D(Stall_D_s),
-            .Stall_F(Stall_F_s)
+            .Stall_F(Stall_F_s),
+            .load_operation(load_operation_s)
             );
 
 datapath datapath_module(
@@ -93,7 +94,9 @@ datapath datapath_module(
             .Flush_E(Flush_E_s),
             .Flush_D(Flush_D_s),
             .Stall_D(Stall_D_s),
-            .Stall_F(Stall_F_s)
+            .Stall_F(Stall_F_s),
+            .cache_write(MemWrite_s),
+            .load_operation(load_operation_s)
             );
             
 assign MemWrite = MemWrite_s;

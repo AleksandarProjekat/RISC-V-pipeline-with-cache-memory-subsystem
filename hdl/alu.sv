@@ -1,9 +1,10 @@
 `timescale 1ns / 1ps
 
-module alu(input logic [31:0] SrcA,SrcB,
-           input logic [2:0] ALUControl,
-           output logic [31:0] ALUResult,
-           output logic Zero
+module alu(
+        input logic [31:0] SrcA,SrcB,
+        input logic [2:0] ALUControl,
+        output logic [31:0] ALUResult,
+        output logic Zero
     );
     
     logic signed [31:0]arithmetic_shift_right;

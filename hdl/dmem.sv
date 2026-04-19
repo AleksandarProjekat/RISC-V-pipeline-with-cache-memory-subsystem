@@ -6,12 +6,14 @@ module dmem(
     output logic [31:0]rd
     );
 
-    typedef struct packed 
-    {
-        logic [1:0]   mesi_state;  
-        logic [23:0]  tag;
-        logic [31:0]  data;   
+    typedef struct packed {
+        logic valid;
+        logic lru;
+        logic [22:0] tag;
+        logic [31:0] data;
     } cache_line_t;
+
+    cache_line_t cache_memory_L1[63:0][2:0]; // 64 sets with 2 ways each
     
     logic [31:0] RAM[63:0];
     

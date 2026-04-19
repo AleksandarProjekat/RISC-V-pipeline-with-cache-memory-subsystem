@@ -24,6 +24,7 @@ add_files -norecurse ../hdl/hazard_unit.sv
 add_files -norecurse ../hdl/imem.sv
 add_files -norecurse ../hdl/maindec.sv
 add_files -norecurse ../hdl/regfile.sv
+add_files -norecurse ../hdl/L1_cache.sv
 add_files -norecurse ../hdl/controller.sv
 add_files -norecurse ../hdl/datapath.sv
 add_files -norecurse ../hdl/riscVpipeline.sv
