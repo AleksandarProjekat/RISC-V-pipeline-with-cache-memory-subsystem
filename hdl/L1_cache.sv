@@ -4,10 +4,14 @@ module L1_cache(
     input logic clk,
     input logic we,
     input logic rst,
+    input logic valid_load,
     input logic [31:0]address, 
     input logic [31:0] wd, 
+    input logic [31:0] data_from_L2,
     input logic load_operation,
     output logic [31:0]rd,
+    output logic [31:0] data_to_L2,
+    output logic [31:0] address_to_L2,
     output logic stall
     );
 
@@ -117,6 +121,9 @@ module L1_cache(
     
     always_ff @(posedge clk or posedge rst) begin
         if(rst) begin
+            data_to_L2 <= 'b0;
+            address_to_L2 <= 'b0;
+            
             for (integer i = 0; i < 64; i++) begin
                 for (integer j = 0; j < 2; j++) begin
                     cache_memory_L1[i][j].valid <= 0;
@@ -130,7 +137,7 @@ module L1_cache(
             if(we) begin
                 RAM[address[31:2]] <= wd;
 
-
+                // inicijalni slucaj kad su oba smera prazna
                 if(cache_memory_L1[set_index][0].valid == 0 && cache_memory_L1[set_index][1].valid == 0) begin 
                     // Smesti na nulti way
                     cache_memory_L1[set_index][0].valid <= 1;
@@ -156,6 +163,9 @@ module L1_cache(
                         cache_memory_L1[set_index][1].lru   <= 1;   // Mark Way 1 as least recently used
                         cache_memory_L1[set_index][0].data  <= wd;
                         cache_memory_L1[set_index][0].tag   <= tag;
+
+                        data_to_L2 <= cache_memory_L1[set_index][0].data;
+                        address_to_L2 <= address;
                     end
                 end
                 // Oba su zauzeta 
@@ -165,13 +175,20 @@ module L1_cache(
                         cache_memory_L1[set_index][0].data <= wd;
                         cache_memory_L1[set_index][0].lru  <= 0;
                         cache_memory_L1[set_index][1].lru  <= 1;
+
+                        data_to_L2 <= cache_memory_L1[set_index][0].data;
+                        address_to_L2 <= address;
                     end 
                     else if(cache_memory_L1[set_index][1].tag == tag) begin
                         // Smesti na prvi i izbaci u DMEM
                         cache_memory_L1[set_index][1].data <= wd;
                         cache_memory_L1[set_index][1].lru  <= 0;
                         cache_memory_L1[set_index][0].lru  <= 1;
+
+                        data_to_L2 <= cache_memory_L1[set_index][1].data;
+                        address_to_L2 <= address;
                     end
+                    // tag se ne nalazi ni u jednom od smerova, potrebno je izbaciti postojeci i ubaciti nov
                     else if(cache_memory_L1[set_index][0].tag != tag && cache_memory_L1[set_index][1].tag != tag) begin
                         // LRU - Smesti na onaj ciji je LRU 1 i izbaci u DMEM
                         if(cache_memory_L1[set_index][0].lru == 1) begin
@@ -179,18 +196,57 @@ module L1_cache(
                             cache_memory_L1[set_index][0].tag  <= tag;
                             cache_memory_L1[set_index][0].lru  <= 0;
                             cache_memory_L1[set_index][1].lru  <= 1;
+
+                            data_to_L2 <= cache_memory_L1[set_index][0].data;
+                            address_to_L2 <= address;
                         end
                         else if(cache_memory_L1[set_index][1].lru == 1) begin
                             cache_memory_L1[set_index][1].data <= wd;
 			    			cache_memory_L1[set_index][1].tag  <= tag;
                             cache_memory_L1[set_index][1].lru  <= 0;
                             cache_memory_L1[set_index][0].lru  <= 1;
+
+                            data_to_L2 <= cache_memory_L1[set_index][1].data;
+                            address_to_L2 <= address;
                         end
                     end
                 end
             end
+            // Load Miss in L1
+            else if(state == WAIT_WRITE &&  valid_load) begin 
+                if(cache_memory_L1[set_index][0].lru == 0 && cache_memory_L1[set_index][1].lru == 0) begin 
+                    // Smesti na nulti
+                    cache_memory_L1[set_index][0].valid <= 1;
+                    cache_memory_L1[set_index][0].tag   <= tag;
+                    cache_memory_L1[set_index][0].data  <= data_from_L2;
+                    cache_memory_L1[set_index][0].lru   <= 0; // Mark as recently used
+                    cache_memory_L1[set_index][1].lru   <= 1; // Mark Way 1 as least recently used
+                end
+                else if(cache_memory_L1[set_index][0].lru == 1 && cache_memory_L1[set_index][1].lru == 0) begin 
+                    // Smesti na nulti i trenutni podatak upisi u DMEM
+                    cache_memory_L1[set_index][0].valid <= 1;
+                    cache_memory_L1[set_index][0].data  <= data_from_L2;
+                    cache_memory_L1[set_index][0].tag   <= tag;
+                    cache_memory_L1[set_index][0].lru   <= 0;
+                    cache_memory_L1[set_index][1].lru   <= 1;
+                    
+                    data_to_L2    <= cache_memory_L1[set_index][0].data;  
+                    address_to_L2 <= address;
+                end
+                else if(cache_memory_L1[set_index][1].lru == 1 && cache_memory_L1[set_index][0].lru == 0) begin 
+                    // Smesti na prvi i trenutni podatak upisi u DMEM
+                    cache_memory_L1[set_index][1].valid <= 1;
+                    cache_memory_L1[set_index][1].data  <= data_from_L2;
+                    cache_memory_L1[set_index][1].tag   <= tag;
+                    cache_memory_L1[set_index][1].lru   <= 0;
+                    cache_memory_L1[set_index][0].lru   <= 1;
+                    
+                    data_to_L2    <= cache_memory_L1[set_index][1].data;
+                    address_to_L2 <= address;
+                end
+            end
             // Load Hit in L1 - Only toggle LRU bits
-            else if(cache_hit == 1 && load_operation) begin
+            else if(cache_hit == 2'b10 && load_operation) begin
                 // Handle LOAD HIT: update LRU
                 if (way0_hit == 1) begin
                     cache_memory_L1[set_index][0].lru <= 0; // Way 0 recently used
@@ -200,7 +256,7 @@ module L1_cache(
                     cache_memory_L1[set_index][0].lru <= 1; // Way 0 least recently used
                     cache_memory_L1[set_index][1].lru <= 0; // Way 1 recently used
                 end
-            end    
+            end     
         end
     end    
 endmodule

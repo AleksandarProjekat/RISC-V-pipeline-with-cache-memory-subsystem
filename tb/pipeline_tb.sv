@@ -20,17 +20,11 @@ module tb();
     end
 
     initial begin
-        rst <= 1'b1;
+        rst = 1'b1;
         #800;
-        rst <= 1'b0;
+        rst = 1'b0;
         #20000;
         $finish;    
     end
-    /*
-    initial begin
-        $dumpfile("dump.vcd");
-        $dumpvars(0);
-    end
-    */
     
 endmodule

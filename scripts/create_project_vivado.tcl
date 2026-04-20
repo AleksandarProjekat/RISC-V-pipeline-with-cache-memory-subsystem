@@ -38,6 +38,7 @@ set_property SOURCE_SET sources_1 [get_filesets sim_1]
 set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_context} -objects [get_runs synth_1]
 
 add_files -fileset sim_1 -norecurse ../tb/pipeline_tb.sv
+#add_files -fileset sim_1 -norecurse ../tb/cache_L1_tb.sv
 
 update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1
