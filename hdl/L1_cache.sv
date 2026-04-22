@@ -12,7 +12,9 @@ module L1_cache(
     output logic [31:0]rd,
     output logic [31:0] data_to_L2,
     output logic [31:0] address_to_L2,
-    output logic stall
+    output logic stall,
+    output logic we_L2,
+    output logic [1:0] cache_hit
     );
 
     // -------------------------------------------------------
@@ -43,7 +45,6 @@ module L1_cache(
 
     logic way0_hit;
     logic way1_hit;
-    logic [1:0] cache_hit;
 
     typedef enum logic [1:0] {MAIN, WAIT_WRITE} state_t;
     state_t state, next_state;
@@ -121,8 +122,9 @@ module L1_cache(
     
     always_ff @(posedge clk or posedge rst) begin
         if(rst) begin
-            data_to_L2 <= 'b0;
+            data_to_L2    <= 'b0;
             address_to_L2 <= 'b0;
+            we_L2         <= 'b0;
             
             for (integer i = 0; i < 64; i++) begin
                 for (integer j = 0; j < 2; j++) begin
@@ -145,6 +147,7 @@ module L1_cache(
                     cache_memory_L1[set_index][1].lru   <= 1;   // Mark Way 1 as least recently used
                     cache_memory_L1[set_index][0].data  <= wd;
                     cache_memory_L1[set_index][0].tag   <= tag;
+                    we_L2 <= 0;
                 end
                 // Nulti je zauzet - Prvi je slobodan
                else if(cache_memory_L1[set_index][0].valid == 1 && cache_memory_L1[set_index][1].valid == 0) begin
@@ -155,6 +158,8 @@ module L1_cache(
                         cache_memory_L1[set_index][0].lru   <= 1;   // Mark Way 1 as least recently used
                         cache_memory_L1[set_index][1].data  <= wd;
                         cache_memory_L1[set_index][1].tag   <= tag;
+                    
+                        we_L2         <= 'b0;
                     end
                     else begin
                         // Smesti na nutli
@@ -163,9 +168,8 @@ module L1_cache(
                         cache_memory_L1[set_index][1].lru   <= 1;   // Mark Way 1 as least recently used
                         cache_memory_L1[set_index][0].data  <= wd;
                         cache_memory_L1[set_index][0].tag   <= tag;
-
-                        data_to_L2 <= cache_memory_L1[set_index][0].data;
-                        address_to_L2 <= address;
+                        
+                        we_L2         <= 'b0;
                     end
                 end
                 // Oba su zauzeta 
@@ -176,8 +180,7 @@ module L1_cache(
                         cache_memory_L1[set_index][0].lru  <= 0;
                         cache_memory_L1[set_index][1].lru  <= 1;
 
-                        data_to_L2 <= cache_memory_L1[set_index][0].data;
-                        address_to_L2 <= address;
+                        we_L2 <= 0;
                     end 
                     else if(cache_memory_L1[set_index][1].tag == tag) begin
                         // Smesti na prvi i izbaci u DMEM
@@ -185,8 +188,7 @@ module L1_cache(
                         cache_memory_L1[set_index][1].lru  <= 0;
                         cache_memory_L1[set_index][0].lru  <= 1;
 
-                        data_to_L2 <= cache_memory_L1[set_index][1].data;
-                        address_to_L2 <= address;
+                        we_L2 <= 0;
                     end
                     // tag se ne nalazi ni u jednom od smerova, potrebno je izbaciti postojeci i ubaciti nov
                     else if(cache_memory_L1[set_index][0].tag != tag && cache_memory_L1[set_index][1].tag != tag) begin
@@ -197,8 +199,9 @@ module L1_cache(
                             cache_memory_L1[set_index][0].lru  <= 0;
                             cache_memory_L1[set_index][1].lru  <= 1;
 
-                            data_to_L2 <= cache_memory_L1[set_index][0].data;
-                            address_to_L2 <= address;
+                            data_to_L2    <= cache_memory_L1[set_index][0].data;
+                            address_to_L2 <= {cache_memory_L1[set_index][0].tag, set_index, 2'b00};
+                            we_L2         <= 1;
                         end
                         else if(cache_memory_L1[set_index][1].lru == 1) begin
                             cache_memory_L1[set_index][1].data <= wd;
@@ -206,9 +209,15 @@ module L1_cache(
                             cache_memory_L1[set_index][1].lru  <= 0;
                             cache_memory_L1[set_index][0].lru  <= 1;
 
-                            data_to_L2 <= cache_memory_L1[set_index][1].data;
-                            address_to_L2 <= address;
+                            data_to_L2    <= cache_memory_L1[set_index][1].data;
+                            address_to_L2 <= {cache_memory_L1[set_index][1].tag, set_index, 2'b00};
+                            we_L2         <= 1;
                         end
+                    end
+                    else begin
+                        data_to_L2    <= 0; 
+                        address_to_L2 <= 0;
+                        we_L2         <= 0;
                     end
                 end
             end
@@ -221,6 +230,7 @@ module L1_cache(
                     cache_memory_L1[set_index][0].data  <= data_from_L2;
                     cache_memory_L1[set_index][0].lru   <= 0; // Mark as recently used
                     cache_memory_L1[set_index][1].lru   <= 1; // Mark Way 1 as least recently used
+                    we_L2         <= 0;
                 end
                 else if(cache_memory_L1[set_index][0].lru == 1 && cache_memory_L1[set_index][1].lru == 0) begin 
                     // Smesti na nulti i trenutni podatak upisi u DMEM
@@ -231,7 +241,8 @@ module L1_cache(
                     cache_memory_L1[set_index][1].lru   <= 1;
                     
                     data_to_L2    <= cache_memory_L1[set_index][0].data;  
-                    address_to_L2 <= address;
+                    address_to_L2 <= {cache_memory_L1[set_index][0].tag, set_index, 2'b00};
+                    we_L2         <= 1;
                 end
                 else if(cache_memory_L1[set_index][1].lru == 1 && cache_memory_L1[set_index][0].lru == 0) begin 
                     // Smesti na prvi i trenutni podatak upisi u DMEM
@@ -242,7 +253,8 @@ module L1_cache(
                     cache_memory_L1[set_index][0].lru   <= 1;
                     
                     data_to_L2    <= cache_memory_L1[set_index][1].data;
-                    address_to_L2 <= address;
+                    address_to_L2 <= {cache_memory_L1[set_index][1].tag, set_index, 2'b00};
+                    we_L2         <= 1;
                 end
             end
             // Load Hit in L1 - Only toggle LRU bits
@@ -256,7 +268,14 @@ module L1_cache(
                     cache_memory_L1[set_index][0].lru <= 1; // Way 0 least recently used
                     cache_memory_L1[set_index][1].lru <= 0; // Way 1 recently used
                 end
-            end     
+
+                we_L2 <= 0;
+            end   
+            else begin
+                data_to_L2    <= 0; 
+                address_to_L2 <= 0;
+                we_L2         <= 0;
+            end  
         end
     end    
 endmodule

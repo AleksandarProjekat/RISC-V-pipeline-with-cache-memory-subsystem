@@ -52,8 +52,6 @@ module cache_L2_tb();
     end
     
     initial begin
-        $display("=== START TEST ===");
-
         // INIT
         clk_s = 0;
         rst_s = 1;

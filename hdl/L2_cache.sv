@@ -4,6 +4,7 @@ module L2_cache(
     input  logic we,
     input  logic load,
     input  logic [31:0] address,
+    input  logic [31:0] address_from_L1,
     input  logic [31:0] wd,
     input  logic [31:0] data_from_mem,
     input  logic valid_mem,
@@ -12,7 +13,9 @@ module L2_cache(
     output logic stall,
     output logic [31:0] address_to_mem,
     output logic [31:0] data_to_mem,
-    output logic valid_data_from_L2
+    output logic we_dmem,
+    output logic valid_data_from_L2,
+    output logic [1:0] cache_hit
 );
 
     // -------------------------------------------------------
@@ -28,7 +31,6 @@ module L2_cache(
     } line_t;
 
     line_t cache_L2 [63:0][3:0];
-    logic [1:0] cache_hit;
 
     // MRU (2 bita po setu)
     logic [1:0] mru [63:0];
@@ -174,7 +176,7 @@ module L2_cache(
                     cache_L2[i][j].data  <= 0;
                 end
             end
-
+            we_dmem        <= 0;
             data_to_mem    <= 0;
             address_to_mem <= 0;
         end
@@ -187,12 +189,19 @@ module L2_cache(
                     // WRITE HIT
                     cache_L2[index][hit_way].data <= wd;
                     mru[index] <= hit_way;
+                    we_dmem        <= 0;
                 end 
                 else begin
                     // EVICTION (SAMO AKO JE VALID)
                     if (!found_free && cache_L2[index][target_way].valid) begin
                         data_to_mem    <= cache_L2[index][target_way].data;
                         address_to_mem <= {cache_L2[index][target_way].tag,index,2'b00};
+                        we_dmem        <= 1;
+                    end
+                    else begin
+                        data_to_mem    <= '0;
+                        address_to_mem <= '0;
+                        we_dmem        <=  0;
                     end
 
                     // WRITE ALLOCATE (UPIS NOVOG PODATKA)
@@ -207,6 +216,7 @@ module L2_cache(
             // LOAD HIT -> update MRU
             else if (load && hit && state == IDLE) begin
                 mru[index] <= hit_way;
+                we_dmem    <= 0;
             end
             // LOAD MISS
             else if (state == MISS && valid_mem) begin
@@ -214,6 +224,12 @@ module L2_cache(
                 if (!found_free && cache_L2[index][target_way].valid) begin
                     data_to_mem    <= cache_L2[index][target_way].data;
                     address_to_mem <= {cache_L2[index][target_way].tag,index,2'b00};
+                    we_dmem        <= 1;
+                end
+                else begin
+                    data_to_mem    <= '0;
+                    address_to_mem <= '0;
+                    we_dmem        <=  0;
                 end
 
                 // fill
@@ -222,6 +238,11 @@ module L2_cache(
                 cache_L2[index][target_way].data  <= data_from_mem;
 
                 mru[index] <= target_way;
+            end
+            else begin
+                data_to_mem    <= '0;
+                address_to_mem <= '0;
+                we_dmem        <=  0;
             end
 
         end

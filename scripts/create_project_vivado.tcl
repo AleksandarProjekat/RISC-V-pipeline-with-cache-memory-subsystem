@@ -24,8 +24,9 @@ set_property board_part digilentinc.com:zybo-z7-10:part0:1.2 [current_project]
 #add_files -norecurse ../hdl/imem.sv
 #add_files -norecurse ../hdl/maindec.sv
 #add_files -norecurse ../hdl/regfile.sv
-#add_files -norecurse ../hdl/L1_cache.sv
+add_files -norecurse ../hdl/L1_cache.sv
 add_files -norecurse ../hdl/L2_cache.sv
+add_files -norecurse ../hdl/cache_subsystem.sv
 #add_files -norecurse ../hdl/controller.sv
 #add_files -norecurse ../hdl/datapath.sv
 #add_files -norecurse ../hdl/riscVpipeline.sv
@@ -40,7 +41,8 @@ set_property -name {STEPS.SYNTH_DESIGN.ARGS.MORE OPTIONS} -value {-mode out_of_c
 
 #add_files -fileset sim_1 -norecurse ../tb/pipeline_tb.sv
 #add_files -fileset sim_1 -norecurse ../tb/cache_L1_tb.sv
-add_files -fileset sim_1 -norecurse ../tb/cache_L2_tb.sv
+#add_files -fileset sim_1 -norecurse ../tb/cache_L2_tb.sv
+add_files -fileset sim_1 -norecurse ../tb/cache_subsystem_tb.sv
 
 update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1
