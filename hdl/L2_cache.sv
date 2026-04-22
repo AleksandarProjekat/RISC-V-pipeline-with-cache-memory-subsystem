@@ -11,7 +11,8 @@ module L2_cache(
     output logic [31:0] rd,
     output logic stall,
     output logic [31:0] address_to_mem,
-    output logic [31:0] data_to_mem
+    output logic [31:0] data_to_mem,
+    output logic valid_data_from_L2
 );
 
     // -------------------------------------------------------
@@ -27,6 +28,7 @@ module L2_cache(
     } line_t;
 
     line_t cache_L2 [63:0][3:0];
+    logic [1:0] cache_hit;
 
     // MRU (2 bita po setu)
     logic [1:0] mru [63:0];
@@ -44,29 +46,32 @@ module L2_cache(
     logic hit;
     logic [1:0] hit_way;
 
-    logic [1:0] replace_way;
-
     
     logic [1:0] free_way, target_way;
     logic found_free;
 
     always_comb begin
-        hit_vec = 4'b0000;
+        if(load) begin
+            for (int i = 0; i < 4; i++) begin
+                if (cache_L2[index][i].valid && cache_L2[index][i].tag == tag)
+                    hit_vec[i] = 1;
+            end
 
-        for (int i = 0; i < 4; i++) begin
-            if (cache_L2[index][i].valid && cache_L2[index][i].tag == tag)
-                hit_vec[i] = 1;
+            hit = |hit_vec;
+
+            case (hit_vec)
+                4'b0001: hit_way = 2'd0;
+                4'b0010: hit_way = 2'd1;
+                4'b0100: hit_way = 2'd2;
+                4'b1000: hit_way = 2'd3;
+                default: hit_way = 2'd0;
+            endcase
         end
-
-        hit = |hit_vec;
-
-        case (hit_vec)
-            4'b0001: hit_way = 2'd0;
-            4'b0010: hit_way = 2'd1;
-            4'b0100: hit_way = 2'd2;
-            4'b1000: hit_way = 2'd3;
-            default: hit_way = 2'd0;
-        endcase
+        else begin
+            hit_vec = 4'b0000;
+            hit = 0;
+            hit_way = 0;
+        end
     end
 
     // -------------------------------------------------------
@@ -85,22 +90,32 @@ module L2_cache(
     end
 
     always_comb begin
-        stall = 0;
-        next  = IDLE;
-
         case (state)
             IDLE: begin
                 if (load && !hit) begin
+                    cache_hit = 2'b01; // CACHE MISS
                     stall = 1;
                     next  = MISS;
+                end
+                else begin
+                    stall = 0;
+                    cache_hit = 2'b00; 
+                    next = IDLE;   
                 end
             end
 
             MISS: begin
-                stall = 1;
-                if (hit)
+                if (load && hit) begin
+                    cache_hit = 2'b10; // CACHE HIT
                     next = IDLE;
+                end
+                else begin
+                    stall = 1;
+                    cache_hit = 2'b01; // CACHE MISS
+                    next = MISS;
+                end
             end
+            default: next = IDLE;
         endcase
     end
 
@@ -108,10 +123,14 @@ module L2_cache(
     // READ
     // -------------------------------------------------------
     always_comb begin
-        if (load && hit)
+        if (load && hit) begin
             rd = cache_L2[index][hit_way].data;
-        else
-            rd = 32'b0;
+            valid_data_from_L2 = 1;
+        end
+        else begin
+            rd = 32'hx;
+            valid_data_from_L2 = 0;
+        end
     end
 
     always_comb begin
@@ -125,9 +144,7 @@ module L2_cache(
             end
         end
 
-        // ----------------------------------
-        // 2. ODABIR WAY-A
-        // ----------------------------------
+        // ODABIR WAY-A
         if (found_free) begin
             // CASE 1: postoji slobodan slot
             target_way = free_way;
@@ -154,7 +171,7 @@ module L2_cache(
                 for (int j = 0; j < NUM_WAYS; j++) begin
                     cache_L2[i][j].valid <= 0;
                     cache_L2[i][j].tag   <= 0;
-                    cache_L2[i][j].data  <= i+j;
+                    cache_L2[i][j].data  <= 0;
                 end
             end
 
@@ -162,14 +179,6 @@ module L2_cache(
             address_to_mem <= 0;
         end
         else begin
-
-            // -----------------------------------
-            // LOAD HIT → update MRU
-            // -----------------------------------
-            if (load && hit) begin
-                mru[index] <= hit_way;
-            end
-
             // -----------------------------------
             // WRITE (STORE)
             // -----------------------------------
@@ -178,10 +187,6 @@ module L2_cache(
                     // WRITE HIT
                     cache_L2[index][hit_way].data <= wd;
                     mru[index] <= hit_way;
-
-                    // write-through
-                    data_to_mem    <= wd;
-                    address_to_mem <= address;
                 end 
                 else begin
                     // EVICTION (SAMO AKO JE VALID)
@@ -199,30 +204,24 @@ module L2_cache(
                     mru[index] <= target_way;
                 end
             end
-
+            // LOAD HIT -> update MRU
+            else if (load && hit && state == IDLE) begin
+                mru[index] <= hit_way;
+            end
             // LOAD MISS
             else if (state == MISS && valid_mem) begin
-                replace_way = 0;
-
-                case (mru[index])
-                    2'd0: replace_way = 1;
-                    2'd1: replace_way = 2;
-                    2'd2: replace_way = 3;
-                    2'd3: replace_way = 0;
-                endcase
-
                 // eviction
-                if (cache_L2[index][replace_way].valid) begin
-                    data_to_mem    <= cache_L2[index][replace_way].data;
-                    address_to_mem <= {cache_L2[index][replace_way].tag,index,2'b00};
+                if (!found_free && cache_L2[index][target_way].valid) begin
+                    data_to_mem    <= cache_L2[index][target_way].data;
+                    address_to_mem <= {cache_L2[index][target_way].tag,index,2'b00};
                 end
 
                 // fill
-                cache_L2[index][replace_way].valid <= 1;
-                cache_L2[index][replace_way].tag   <= tag;
-                cache_L2[index][replace_way].data  <= data_from_mem;
+                cache_L2[index][target_way].valid <= 1;
+                cache_L2[index][target_way].tag   <= tag;
+                cache_L2[index][target_way].data  <= data_from_mem;
 
-                mru[index] <= replace_way;
+                mru[index] <= target_way;
             end
 
         end
