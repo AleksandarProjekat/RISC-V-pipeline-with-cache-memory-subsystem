@@ -64,9 +64,6 @@ module L1_cache(
     end
 
     always_comb begin
-        stall = 0;
-        next_state = MAIN;
-
         case (state)
             MAIN: begin
                 if(load_operation) begin        // LOAD
@@ -240,9 +237,16 @@ module L1_cache(
                     cache_memory_L1[set_index][0].lru   <= 0;
                     cache_memory_L1[set_index][1].lru   <= 1;
                     
-                    data_to_L2    <= cache_memory_L1[set_index][0].data;  
-                    address_to_L2 <= {cache_memory_L1[set_index][0].tag, set_index, 2'b00};
-                    we_L2         <= 1;
+                    if(cache_memory_L1[set_index][0].valid) begin
+                        we_L2 <= 1;
+                        data_to_L2    <= cache_memory_L1[set_index][0].data;  
+                        address_to_L2 <= {cache_memory_L1[set_index][0].tag, set_index, 2'b00};
+                    end
+                    else begin
+                        we_L2 <= 0;
+                        data_to_L2    <= 0;
+                        address_to_L2 <= 0;
+                    end
                 end
                 else if(cache_memory_L1[set_index][1].lru == 1 && cache_memory_L1[set_index][0].lru == 0) begin 
                     // Smesti na prvi i trenutni podatak upisi u DMEM
@@ -252,9 +256,16 @@ module L1_cache(
                     cache_memory_L1[set_index][1].lru   <= 0;
                     cache_memory_L1[set_index][0].lru   <= 1;
                     
-                    data_to_L2    <= cache_memory_L1[set_index][1].data;
-                    address_to_L2 <= {cache_memory_L1[set_index][1].tag, set_index, 2'b00};
-                    we_L2         <= 1;
+                    if(cache_memory_L1[set_index][1].valid) begin
+                        we_L2 <= 1;
+                        data_to_L2    <= cache_memory_L1[set_index][1].data;
+                        address_to_L2 <= {cache_memory_L1[set_index][1].tag, set_index, 2'b00};
+                    end
+                    else begin
+                        we_L2 <= 0;
+                        data_to_L2    <= 0;
+                        address_to_L2 <= 0;
+                    end
                 end
             end
             // Load Hit in L1 - Only toggle LRU bits

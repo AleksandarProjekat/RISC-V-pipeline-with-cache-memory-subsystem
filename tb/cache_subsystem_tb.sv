@@ -20,6 +20,9 @@ module cache_subsystem_tb();
 
     logic [23:0] tag_s;
     logic [5:0] index_s;
+
+    logic [31:0] data_from_mem_in_s;
+    logic valid_mem_in_s, stall_out_s;
     
     assign tag_s   = address_s[31:8];
     assign index_s = address_s[ 7:2];
@@ -31,15 +34,15 @@ module cache_subsystem_tb();
         .load_operation_in(load_operation_s),
         .we_in(we_s),
         .wd_in(wd_s),
-        .data_from_mem_in(),
-        .valid_mem_in(),
+        .data_from_mem_in(data_from_mem_in_s),
+        .valid_mem_in(valid_mem_in_s),
         
         .rd_out(),
         .address_to_mem_out(),
         .data_to_mem_out(),
         .we_dmem_out(),
         .cache_hit_out(),
-        .stall_out()
+        .stall_out(stall_out_s)
     );
 
     always begin
@@ -54,6 +57,9 @@ module cache_subsystem_tb();
         we_s = 0;
         address_s = 0;
         wd_s = 0;
+        load_operation_s = 0;
+        data_from_mem_in_s = 0;
+        valid_mem_in_s = 0;
 
         repeat(2) begin
             @(posedge clk_s);
@@ -61,10 +67,15 @@ module cache_subsystem_tb();
         
         rst_s = 0;
 
+
         repeat(2) begin
             @(posedge clk_s);
         end
-
+        // =====================================================
+        // Popunjavam prvo L1 i onda eviktujem podatke u L2 
+        // sve dok se i u L2 ne dogodi evikcija
+        // =====================================================
+        /*
         // UPIS U PRVI WAY
         @(posedge clk_s);
         we_s = 0;
@@ -170,6 +181,53 @@ module cache_subsystem_tb();
         @(posedge clk_s);
         we_s = 0;
         address_s = '1;
+
+        repeat(3) begin
+            @(posedge clk_s);
+            we_s = 0;
+        end
+        */
+
+        // ==========================================================================================================
+        // postavim load na L1, posle izvesnog broja taktova upisem podatak u L2 na port kojim primam podatak od dmem
+        // ==========================================================================================================
+        for(integer i = 0; i < 5; i++) begin
+            fork
+                begin
+                    @(posedge clk_s);
+                    load_operation_s = 1;
+                    address_s[31:8]  = i;
+                    address_s[7:0]   = 0;
+                    /*
+                    repeat(5) begin
+                        @(posedge clk_s);
+                    end
+                    */
+                    @(posedge stall_out_s);
+                    @(negedge stall_out_s);
+                    load_operation_s = 0;
+                end
+                begin
+                    /*
+                    repeat(10)begin
+                        @(posedge clk_s);
+                    end
+                    */
+                    @(posedge clk_s);
+                    data_from_mem_in_s = i+1;
+                    valid_mem_in_s = 1;
+                    @(posedge clk_s);
+
+                    valid_mem_in_s = 0;
+                end
+            join
+
+            repeat(10)begin
+                @(posedge clk_s);
+                address_s = 0;
+                load_operation_s = 0;
+            end
+        end
 
         #20000;
         $finish;    

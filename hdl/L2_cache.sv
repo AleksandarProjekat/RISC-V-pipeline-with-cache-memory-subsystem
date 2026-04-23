@@ -53,27 +53,24 @@ module L2_cache(
     logic found_free;
 
     always_comb begin
-        if(load) begin
-            for (int i = 0; i < 4; i++) begin
-                if (cache_L2[index][i].valid && cache_L2[index][i].tag == tag)
-                    hit_vec[i] = 1;
-            end
+        hit_vec = 4'b0000;
+        hit = 0;
+        hit_way = 0;
 
-            hit = |hit_vec;
+        for (int i = 0; i < 4; i++) begin
+            if (cache_L2[index][i].valid && cache_L2[index][i].tag == tag)
+                hit_vec[i] = 1;
+        end
 
-            case (hit_vec)
-                4'b0001: hit_way = 2'd0;
-                4'b0010: hit_way = 2'd1;
-                4'b0100: hit_way = 2'd2;
-                4'b1000: hit_way = 2'd3;
-                default: hit_way = 2'd0;
-            endcase
-        end
-        else begin
-            hit_vec = 4'b0000;
-            hit = 0;
-            hit_way = 0;
-        end
+        hit = |hit_vec;
+
+        case (hit_vec)
+            4'b0001: hit_way = 2'd0;
+            4'b0010: hit_way = 2'd1;
+            4'b0100: hit_way = 2'd2;
+            4'b1000: hit_way = 2'd3;
+            default: hit_way = 2'd0;
+        endcase
     end
 
     // -------------------------------------------------------
@@ -189,7 +186,7 @@ module L2_cache(
                     // WRITE HIT
                     cache_L2[index][hit_way].data <= wd;
                     mru[index] <= hit_way;
-                    we_dmem        <= 0;
+                    we_dmem    <= 0;
                 end 
                 else begin
                     // EVICTION (SAMO AKO JE VALID)
