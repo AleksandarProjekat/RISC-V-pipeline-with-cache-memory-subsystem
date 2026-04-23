@@ -12,7 +12,7 @@ module controller(
         output logic ALUSrcB,
         output logic Jump,
         output logic Branch,
-        output logic [1:0] ImmSrc,
+        output logic [2:0] ImmSrc,
         output logic [2:0] ALUControl,
         
         //output of hazard
@@ -47,7 +47,8 @@ module controller(
     logic funct7b5_D;
     
     logic RegWrite_D, MemWrite_D, Jump_D, Branch_D, ALUSrcB_D;
-    logic [1:0] ResultSrc_D, ImmSrc_D;
+    logic [1:0] ResultSrc_D; 
+    logic [2:0] ImmSrc_D;
     logic [2:0] ALUControl_D;
     
     assign op_F = op;
@@ -154,7 +155,7 @@ always_ff @(posedge clk) begin
             end
 end
 
-assign load_operation = (ResultSrc_M == 1);
+assign load_operation = (ResultSrc_M == 2'b01);
 
 ///////////////////////////////////////////////////////
 //

@@ -11,7 +11,8 @@ module riscVpipeline(
     );
     //Control signals
     logic RegWrite_s, MemWrite_s, Jump_s, Branch_s, ALUSrcB_s;
-    logic [1:0] ResultSrc_s, ImmSrc_s;
+    logic [1:0] ResultSrc_s; 
+    logic [2:0] ImmSrc_s;
     logic [2:0] ALUControl_s; 
     
     //Memory signals

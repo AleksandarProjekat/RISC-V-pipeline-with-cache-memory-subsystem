@@ -13,7 +13,7 @@ module datapath(
     input logic Branch,
     input logic [2:0] ALUControl,
     input logic ALUSrcB, 
-    input logic [1:0] ImmSrc,
+    input logic [2:0] ImmSrc,
     //input hazard control signals
     input logic [1:0] ForwardA_E,
     input logic [1:0] ForwardB_E,
@@ -54,6 +54,10 @@ logic [31:0] SrcB_E_forward_s;
 
 //WRITE-BACK signals
 logic [31:0] ResultW_s;
+
+logic [31:0] ImmExt_W;
+logic [31:0] ImmExt_M;
+logic [31:0] ImmExt_W;
 
 
 
@@ -217,6 +221,7 @@ always_ff @(posedge clk)
                 WriteData_M <= 'b0; 
                 rdest_M <=  'b0;
                 PCPlus4_M <= 'b0;
+                ImmExt_M <= 'b0;
             end  
             else 
             begin
@@ -224,6 +229,7 @@ always_ff @(posedge clk)
                 WriteData_M <= SrcB_E_forward_s; 
                 rdest_M <=  rdest_E;
                 PCPlus4_M <=PCPlus4_E;
+                ImmExt_M <= ImmExt_E;
             end
 
 L1_cache l1_data_cache(
@@ -250,6 +256,7 @@ always_ff @(posedge clk)
                 rdest_W <= 'b0; 
                 PCPlus4_W <=  'b0;
                 ALUResult_W <= 'b0;
+                ImmExt_W <= 'b0;
             end  
             else 
             begin
@@ -257,6 +264,7 @@ always_ff @(posedge clk)
                 rdest_W <= rdest_M; 
                 PCPlus4_W <=  PCPlus4_M;
                 ALUResult_W <= ALUResult_M;
+                ImmExt_W <= ImmExt_M;
             end
 
 
@@ -267,12 +275,13 @@ always_ff @(posedge clk)
 ///////////////////////////////////////////////////////
 
 //mux 3 in - just signals
-always_comb 
-begin
+always_comb begin
     case(ResultSrc)
-        'b00: ResultW_s = ALUResult_W; 
-        'b01: ResultW_s = ReadData_W;
-        default: ResultW_s = PCPlus4_W;
+        2'b00: ResultW_s = ALUResult_W; 
+        2'b01: ResultW_s = ReadData_W;
+        2'b10: ResultW_s = PCPlus4_W;
+        2'b11: ResultW_s = ImmExt_W;   // LUI
+        default: ResultW_s = 32'bx;
      endcase
 end
 
