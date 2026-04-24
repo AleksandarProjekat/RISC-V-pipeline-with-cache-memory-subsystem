@@ -4,10 +4,22 @@ module riscVpipeline(
     input logic clk, reset,
     input logic [31:0] Instr,
     input logic [31:0] ReadData,
+
+    input  logic [31:0] data_from_mem_in,
+    input  logic valid_mem_in,
+
+    output logic [31:0] data_to_mem_out,
+    output logic [31:0] address_to_mem_out,
+    output logic we_dmem_out,
+    output logic [1:0] cache_hit_out,
+    output logic stall_out,
+
     output logic MemWrite,
     output logic [31:0] DataAdr,
     output logic [31:0]WriteData,
     output logic [31:0]PC_out
+
+
     );
     //Control signals
     logic RegWrite_s, MemWrite_s, Jump_s, Branch_s, ALUSrcB_s;
@@ -29,6 +41,8 @@ module riscVpipeline(
     logic[24:20] rs2_D_s;
     logic[1:0] ForwardA_E_s, ForwardB_E_s;
     logic Flush_E_s, Flush_D_s,Stall_D_s,Stall_F_s, load_operation_s;
+
+    logic stall_out_s;
     
 controller controller_module(
             .clk(clk),
@@ -60,7 +74,8 @@ controller controller_module(
             .Flush_D(Flush_D_s),
             .Stall_D(Stall_D_s),
             .Stall_F(Stall_F_s),
-            .load_operation(load_operation_s)
+            .load_operation(load_operation_s),
+            .stall(stall_out_s)
             );
 
 datapath datapath_module(
@@ -97,11 +112,20 @@ datapath datapath_module(
             .Stall_D(Stall_D_s),
             .Stall_F(Stall_F_s),
             .cache_write(MemWrite_s),
-            .load_operation(load_operation_s)
+            .load_operation(load_operation_s),
+
+            .data_from_mem_in(data_from_mem_in),
+            .valid_mem_in(valid_mem_in),
+            .data_to_mem_out(data_to_mem_out),
+            .address_to_mem_out(address_to_mem_out),
+            .we_dmem_out(we_dmem_out),
+            .cache_hit_out(cache_hit_out),
+            .stall_out(stall_out_s)
             );
             
 assign MemWrite = MemWrite_s;
 assign DataAdr = ALURes_s;
 assign WriteData = WriteData_s;
 assign PC_out = PC_out_s;
+assign stall_out = stall_out_s;
 endmodule

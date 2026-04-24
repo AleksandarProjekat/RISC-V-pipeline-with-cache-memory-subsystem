@@ -1,25 +1,37 @@
 `timescale 1ns / 1ps
 
 module dmem(
-    input logic clk,we,
+    input logic clk,we, rst,
     input logic [31:0]a, wd, 
-    output logic [31:0]rd
+    output logic [31:0]rd,
+
+    input logic load_operation,
+    output logic valid_mem_data
     );
-
-    typedef struct packed {
-        logic valid;
-        logic lru;
-        logic [22:0] tag;
-        logic [31:0] data;
-    } cache_line_t;
-
-    cache_line_t cache_memory_L1[63:0][2:0]; // 64 sets with 2 ways each
     
     logic [31:0] RAM[63:0];
     
-    assign rd = RAM[a[31:2]];
-    
-    always_ff @(posedge clk)
-        if(we) RAM[a[31:2]] <= wd;
-        
+    always_comb begin
+        if(load_operation) begin
+            rd = RAM[a[31:2]];
+            valid_mem_data = 1;
+        end
+        else begin
+            rd = 32'hx;
+            valid_mem_data = 1'bx;
+        end
+    end
+
+    always_ff @(posedge clk) begin
+        if(rst) begin
+            for(integer i = 0; i< 64; i++) begin
+                RAM[i] <= i+1;
+            end
+        end
+        else begin
+            if(we) begin
+                RAM[a[31:2]] <= wd;
+            end
+        end
+    end
 endmodule

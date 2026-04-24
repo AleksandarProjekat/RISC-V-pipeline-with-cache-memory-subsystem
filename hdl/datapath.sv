@@ -23,6 +23,15 @@ module datapath(
     input logic Stall_F,
     input logic cache_write,
     input logic load_operation,
+
+    input  logic [31:0] data_from_mem_in,
+    input  logic valid_mem_in,
+    output logic [31:0] data_to_mem_out,
+    output logic [31:0] address_to_mem_out,
+    output logic we_dmem_out,
+    output logic [1:0] cache_hit_out,
+    output logic stall_out,
+
     //outputs to hazard unit
     output logic [11:7] rdest_W_out,
     output logic [11:7] rdest_M_out,
@@ -57,7 +66,6 @@ logic [31:0] ResultW_s;
 
 logic [31:0] ImmExt_W;
 logic [31:0] ImmExt_M;
-logic [31:0] ImmExt_W;
 
 
 
@@ -79,6 +87,9 @@ logic [31:0] ReadData_W, rdest_W, PCPlus4_W,ALUResult_W;
 
 logic [31:0] ReadData_s;
 
+logic stall_total;
+assign stall_total = Stall_F || stall_out_s;
+
 
 ///////////////////////////////////////////////////////
 //
@@ -86,14 +97,16 @@ logic [31:0] ReadData_s;
 //
 ///////////////////////////////////////////////////////
 
+
 //instance of PC reg
-always_ff @(posedge clk, posedge reset)
+always_ff @(posedge clk) begin
             if(reset) 
                 PC_out_s<=0;
-            else if (Stall_F)
+            else if (stall_total)
                 PC_out_s <= PC_out_s;
             else 
                 PC_out_s<=PC_in_s;
+end         
 //instance of MUX, pc select logic (just signal)
 assign PC_in_s = PCSelect_s ?   PCTarget_E_s : PCPlus4_s;
 
@@ -110,7 +123,7 @@ always_ff @(posedge clk)
                 PCPlus4_D <= 'b0;
                 PC_D <= 'b0;
             end
-            else if(Stall_D) begin
+            else if(Stall_D || stall_out_s) begin
                 Instr_D <= Instr_D;
                 PCPlus4_D <= PCPlus4_D;
                 PC_D <= PC_D;       
@@ -132,7 +145,7 @@ assign rs2_D =Instr_D[24:20];
 assign rdest_D = Instr_D[11:7];
 //instance of REG FILE
 regfile registerfile(
-            .clk(clk),
+            .clk(clk & (!stall_out_s)),
             .rst(reset),
             .we3(RegWrite) ,
             .a1(rs1_D), 
@@ -161,14 +174,26 @@ always_ff @(posedge clk)
                  
             else 
             begin
-                rd1_E <= RD1_out_s;
-                rd2_E <= RD2_out_s; 
-                PC_E <=  PC_D;
-                rs1_E <= rs1_D;
-                rs2_E <= rs2_D;
-                rdest_E <= rdest_D;
-                ImmExt_E <= ImmExt_s;
-                PCPlus4_E <= PCPlus4_D;
+                if(!stall_out_s) begin
+                    rd1_E <= RD1_out_s;
+                    rd2_E <= RD2_out_s; 
+                    PC_E <=  PC_D;
+                    rs1_E <= rs1_D;
+                    rs2_E <= rs2_D;
+                    rdest_E <= rdest_D;
+                    ImmExt_E <= ImmExt_s;
+                    PCPlus4_E <= PCPlus4_D;
+                end
+                else begin
+                    rd1_E <= rd1_E;
+                    rd2_E <= rd2_E; 
+                    PC_E <=  PC_E;
+                    rs1_E <= rs1_E;
+                    rs2_E <= rs2_E;
+                    rdest_E <= rdest_E;
+                    ImmExt_E <= ImmExt_E;
+                    PCPlus4_E <= PCPlus4_E;
+                end
             end
 ///////////////////////////////////////////////////////
 //
@@ -225,13 +250,22 @@ always_ff @(posedge clk)
             end  
             else 
             begin
-                ALUResult_M <=ALUResult_E_s ;
-                WriteData_M <= SrcB_E_forward_s; 
-                rdest_M <=  rdest_E;
-                PCPlus4_M <=PCPlus4_E;
-                ImmExt_M <= ImmExt_E;
+                if(!stall_out_s) begin
+                    ALUResult_M <=ALUResult_E_s ;
+                    WriteData_M <= SrcB_E_forward_s; 
+                    rdest_M <=  rdest_E;
+                    PCPlus4_M <=PCPlus4_E;
+                    ImmExt_M <= ImmExt_E;
+                end
+                else begin
+                    ALUResult_M <=ALUResult_M ;
+                    WriteData_M <= WriteData_M; 
+                    rdest_M <=  rdest_M;
+                    PCPlus4_M <=PCPlus4_M;
+                    ImmExt_M <= ImmExt_M;
+                end
             end
-
+/*
 L1_cache l1_data_cache(
     .clk(clk), 
     .rst(reset), 
@@ -241,6 +275,28 @@ L1_cache l1_data_cache(
     .wd(WriteData_M), 
     .rd(ReadData_s)
     );
+*/
+
+cache_subsystem cache_subsys(
+    //input
+    .clk_in(clk),                                       //OBAVEZNO
+    .rst_in(reset),                                     //OBAVEZNO
+    .address_in(ALUResult_M),                           //OBAVEZNO
+    .load_operation_in(load_operation),                 //govoris L1 da ucita podatak
+    .we_in(cache_write),                                //OBAVEZNO
+    .wd_in(WriteData_M),                                //OBAVEZNO
+    .data_from_mem_in(data_from_mem_in),                //Ucitavas podatak iz dmem
+    .valid_mem_in(valid_mem_in),
+    
+    // output
+    .rd_out(ReadData_s),                                //OBAVEZNO
+    .address_to_mem_out(address_to_mem_out),            //Pri evikciji saljes adresu 
+    .data_to_mem_out(data_to_mem_out),                  //Pri evikciji saljes podatak
+    .we_dmem_out(we_dmem_out),                          //Pri evikciji enableujes upis
+    .cache_hit_out(cache_hit_out),                      //Pri cache-hiss saljes load zahtev iz dmem
+    .stall_out(stall_out_s)                               //U slucaju cache-miss drzis stall na 1 kako bi zaustavio pipeline da ne napreduje dalje
+);
+
 
 ///////////////////////////////////////////////////////
 //
@@ -260,11 +316,20 @@ always_ff @(posedge clk)
             end  
             else 
             begin
-                ReadData_W <= ReadData_s;
-                rdest_W <= rdest_M; 
-                PCPlus4_W <=  PCPlus4_M;
-                ALUResult_W <= ALUResult_M;
-                ImmExt_W <= ImmExt_M;
+                if(!stall_out_s) begin
+                    ReadData_W <= ReadData_s;
+                    rdest_W <= rdest_M; 
+                    PCPlus4_W <=  PCPlus4_M;
+                    ALUResult_W <= ALUResult_M;
+                    ImmExt_W <= ImmExt_M;
+                end
+                else begin
+                    ReadData_W <= ReadData_W;
+                    rdest_W <= rdest_W; 
+                    PCPlus4_W <=  PCPlus4_W;
+                    ALUResult_W <= ALUResult_W;
+                    ImmExt_W <= ImmExt_W;
+                end
             end
 
 
@@ -299,5 +364,6 @@ assign rs2_E_out = rs2_E;
 assign rdest_E_out =rdest_E;
 assign rs1_D_out = rs1_D;
 assign rs2_D_out = rs2_D;
+assign stall_out = stall_out_s;
 
 endmodule

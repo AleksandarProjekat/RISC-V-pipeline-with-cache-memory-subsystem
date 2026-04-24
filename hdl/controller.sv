@@ -32,7 +32,8 @@ module controller(
         input logic[24:20] rs2_E,
         input logic[11:7] rdest_E,
         input logic[19:15] rs1_D,
-        input logic[24:20] rs2_D
+        input logic[24:20] rs2_D,
+        input logic stall
     );
     logic [1:0] ALUOp_s;
     
@@ -68,6 +69,8 @@ module controller(
     //WRITE/BACK stage signals
     logic RegWrite_W;
     logic [1:0]ResultSrc_W;
+
+    logic stall_total;
     
 maindec main_decoder(.op(op_D),.RegWrite(RegWrite_D), .ResultSrc(ResultSrc_D), .MemWrite(MemWrite_D), .Jump(Jump_D), .Branch(Branch_D),  .ImmSrc(ImmSrc_D), .ALUSrcB(ALUSrcB_D), .ALUOp(ALUOp_s));
 aludec alu_decoder(.opb5(op_D[5]), .funct3(funct3_D), .funct7b5(funct7b5_D), .ALUOp(ALUOp_s), .ALUControl(ALUControl_D));
@@ -89,13 +92,14 @@ assign ALUControl = ALUControl_E ;
 //
 ///////////////////////////////////////////////////////
 
+assign stall_total = Stall_D || stall;
 always_ff @(posedge clk) begin
             if (reset || Flush_D)begin
                 op_D <= 'b0;
                 funct3_D <= 'b0;
                 funct7b5_D <= 'b0;
             end
-            else if (Stall_D) begin
+            else if (stall_total) begin
                 op_D <= op_D;
                 funct3_D <= funct3_D;
                 funct7b5_D <= funct7b5_D;
@@ -124,15 +128,25 @@ always_ff @(posedge clk) begin
                 ALUControl_E <= 'b0;
             
             end 
-            else
-            begin
-                RegWrite_E <= RegWrite_D;
-                MemWrite_E <= MemWrite_D;
-                Jump_E <= Jump_D;
-                Branch_E <= Branch_D;
-                ALUSrcB_E <= ALUSrcB_D;
-                ResultSrc_E <= ResultSrc_D;
-                ALUControl_E <= ALUControl_D;
+            else begin
+                if(stall) begin
+                    RegWrite_E <= RegWrite_E;
+                    MemWrite_E <= MemWrite_E;
+                    Jump_E <= Jump_E;
+                    Branch_E <= Branch_E;
+                    ALUSrcB_E <= ALUSrcB_E;
+                    ResultSrc_E <= ResultSrc_E;
+                    ALUControl_E <= ALUControl_E;
+                end 
+                else begin
+                    RegWrite_E <= RegWrite_D;
+                    MemWrite_E <= MemWrite_D;
+                    Jump_E <= Jump_D;
+                    Branch_E <= Branch_D;
+                    ALUSrcB_E <= ALUSrcB_D;
+                    ResultSrc_E <= ResultSrc_D;
+                    ALUControl_E <= ALUControl_D;
+                end
             end
 end
 
@@ -147,11 +161,18 @@ always_ff @(posedge clk) begin
                 MemWrite_M <= 'b0;
                 ResultSrc_M <= 'b0;
             end
-            else
-            begin
-                RegWrite_M <= RegWrite_E;
-                MemWrite_M <= MemWrite_E;
-                ResultSrc_M <= ResultSrc_E;
+            else begin
+                if(stall) begin
+                    RegWrite_M <= RegWrite_M;
+                    MemWrite_M <= MemWrite_M;
+                    ResultSrc_M <= ResultSrc_M;
+                end
+                else begin
+                    RegWrite_M <= RegWrite_E;
+                    MemWrite_M <= MemWrite_E;
+                    ResultSrc_M <= ResultSrc_E;
+                end   
+
             end
 end
 
@@ -169,11 +190,15 @@ always_ff @(posedge clk) begin
                 RegWrite_W <= 'b0;
                 ResultSrc_W <= 'b0;
             end
-            else
-            
-            begin
-                RegWrite_W <= RegWrite_M;
-                ResultSrc_W <= ResultSrc_M;
+            else begin
+                if(stall) begin
+                    RegWrite_W <= RegWrite_W;
+                    ResultSrc_W <= ResultSrc_W;
+                end
+                else begin
+                    RegWrite_W <= RegWrite_M;
+                    ResultSrc_W <= ResultSrc_M;
+                end
             end
 end
 endmodule
