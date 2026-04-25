@@ -9,7 +9,7 @@ module aludec(
     );
     
 logic RTypeSub;
-assign RTypeSub = funct7b5 & opb5; //Tanco za R-type instrukcije
+assign RTypeSub = funct7b5 & opb5;
 
 always_comb
     case(ALUOp)

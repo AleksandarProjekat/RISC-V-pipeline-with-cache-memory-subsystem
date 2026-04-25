@@ -10,7 +10,7 @@ set resultDir ../vivado_project
 file mkdir $resultDir
 
 create_project RISCV_CPU $resultDir -part xc7z020clg400-1
-set_property board_part digilentinc.com:zybo-z7-10:part0:1.2 [current_project]
+set_property board_part digilentinc.com:zybo-z7-20:part0:1.1 [current_project]
 
 # ===================================================================================
 # Ukljucivanje svih izvornih i simulacionih fajlova u projekat
@@ -43,6 +43,8 @@ add_files -fileset sim_1 -norecurse ../tb/pipeline_tb.sv
 #add_files -fileset sim_1 -norecurse ../tb/cache_L1_tb.sv
 #add_files -fileset sim_1 -norecurse ../tb/cache_L2_tb.sv
 #add_files -fileset sim_1 -norecurse ../tb/cache_subsystem_tb.sv
+
+add_files -fileset constrs_1 -norecurse ../constraint/clock_constraint.xdc
 
 update_compile_order -fileset sources_1
 update_compile_order -fileset sim_1

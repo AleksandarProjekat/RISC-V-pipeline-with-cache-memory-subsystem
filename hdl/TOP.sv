@@ -17,7 +17,8 @@ logic [31:0] address_to_mem_out_s;
 logic we_dmem_out_s;
 logic [1:0] cache_hit_out_s;
 logic stall_out_s;
- 
+logic load_operation_top; 
+
  riscVpipeline rv_pipeline(
     .clk(clk),
     .reset(reset),
@@ -48,9 +49,10 @@ dmem dmem(
     .valid_mem_data(valid_mem_in_s)
 );
  
- imem imem(.a(PC_out_s), .rd(Instr_s));
+imem imem(.a(PC_out_s), .rd(Instr_s));
   
- assign WriteData = WriteData_s;
- assign DataAdr = DataAdr_s;
- assign MemWrite = MemWrite_s;
+assign load_operation_top = (Instr_s[6:0] == 7'b0000011) ? 1:0;
+assign WriteData = WriteData_s;
+assign DataAdr = DataAdr_s;
+assign MemWrite = MemWrite_s;
 endmodule

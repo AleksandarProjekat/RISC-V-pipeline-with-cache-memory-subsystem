@@ -9,7 +9,7 @@ module dmem(
     output logic valid_mem_data
     );
     
-    logic [31:0] RAM[63:0];
+    logic [31:0] RAM[2047:0];
     
     always_comb begin
         if(load_operation) begin
@@ -25,7 +25,7 @@ module dmem(
     always_ff @(posedge clk) begin
         if(rst) begin
             for(integer i = 0; i< 64; i++) begin
-                RAM[i] <= i+1;
+                RAM[i] <= 0;
             end
         end
         else begin

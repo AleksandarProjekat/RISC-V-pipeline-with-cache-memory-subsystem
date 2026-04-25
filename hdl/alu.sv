@@ -18,10 +18,12 @@ module alu(
             3'b011:ALUResult = SrcA | SrcB;
             3'b100:ALUResult = SrcA ^ SrcB;
             //2'b100:
-            3'b101:if(signed'(SrcA) < signed'(SrcB))
+            3'b101: if(SrcA < SrcB) begin
                         ALUResult = 32'd1;
-                    else
+                    end
+                    else begin
                         ALUResult = 32'd0;
+                    end
             3'b110: ALUResult = SrcA >> SrcB[4:0];
             3'b111: ALUResult = SrcA << SrcB[4:0];
             default : ALUResult = 32'bx;
