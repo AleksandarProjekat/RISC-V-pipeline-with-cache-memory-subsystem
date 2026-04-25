@@ -15,7 +15,7 @@ logic valid_mem_in_s;
 logic [31:0] data_to_mem_out_s;
 logic [31:0] address_to_mem_out_s;
 logic we_dmem_out_s;
-logic [1:0] cache_hit_out_s;
+logic [1:0] cache_hit_out_s, cache_hit_out_d;
 logic stall_out_s;
 logic load_operation_top; 
 
@@ -37,7 +37,8 @@ logic load_operation_top;
     .cache_hit_out(cache_hit_out_s),
     .stall_out(stall_out_s)
     );
- 
+
+
 dmem dmem(
     .clk(clk), 
     .we(we_dmem_out_s), 

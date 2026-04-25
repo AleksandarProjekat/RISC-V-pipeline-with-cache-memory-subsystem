@@ -137,7 +137,7 @@ module L2_cache(
         free_way = 0;
 
         for (int i = 0; i < 4; i++) begin
-            if (!cache_L2[index][i].valid && !found_free) begin
+            if (!cache_L2[index][i].valid && !found_free && !hit) begin
                 free_way   = i;
                 found_free = 1;
             end
@@ -234,7 +234,9 @@ module L2_cache(
                 cache_L2[index][target_way].tag   <= tag;
                 cache_L2[index][target_way].data  <= data_from_mem;
 
-                mru[index] <= target_way;
+                if(hit) begin
+                    mru[index] <= target_way;
+                end
             end
             else begin
                 data_to_mem    <= '0;
