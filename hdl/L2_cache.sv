@@ -230,10 +230,11 @@ module L2_cache(
                 end
 
                 // fill
-                cache_L2[index][target_way].valid <= 1;
-                cache_L2[index][target_way].tag   <= tag;
-                cache_L2[index][target_way].data  <= data_from_mem;
-
+                if(!hit) begin
+                    cache_L2[index][target_way].valid <= 1;
+                    cache_L2[index][target_way].tag   <= tag;
+                    cache_L2[index][target_way].data  <= data_from_mem;
+                end
                 if(hit) begin
                     mru[index] <= target_way;
                 end
