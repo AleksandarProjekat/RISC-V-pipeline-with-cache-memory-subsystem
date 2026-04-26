@@ -8,6 +8,7 @@ module L1_cache(
     input logic [31:0]address, 
     input logic [31:0] wd, 
     input logic [31:0] data_from_L2,
+    input logic stall_in,
     input logic load_operation,
     output logic [31:0]rd,
     output logic [31:0] data_to_L2,

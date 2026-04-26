@@ -11,13 +11,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="1,397.700 ns"></ZoomStartTime>
-      <ZoomEndTime time="4,013.701 ns"></ZoomEndTime>
-      <Cursor1Time time="2,633.700 ns"></Cursor1Time>
+      <ZoomStartTime time="2,352.667 ns"></ZoomStartTime>
+      <ZoomEndTime time="3,836.668 ns"></ZoomEndTime>
+      <Cursor1Time time="2,918.667 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="222"></NameColumnWidth>
-      <ValueColumnWidth column_width="68"></ValueColumnWidth>
+      <ValueColumnWidth column_width="64"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="5" />
    <wvobject fp_name="/tb/clk" type="logic">
@@ -38,6 +38,55 @@
          <obj_property name="ElementShortName">[0][1:0]</obj_property>
          <obj_property name="ObjectShortName">[0][1:0]</obj_property>
          <obj_property name="isExpanded"></obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+         <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][1]" type="array">
+            <obj_property name="ElementShortName">[1]</obj_property>
+            <obj_property name="ObjectShortName">[1]</obj_property>
+            <obj_property name="Radix">HEXRADIX</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+            <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][1].valid" type="logic">
+               <obj_property name="ElementShortName">.valid</obj_property>
+               <obj_property name="ObjectShortName">.valid</obj_property>
+            </wvobject>
+            <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][1].lru" type="logic">
+               <obj_property name="ElementShortName">.lru</obj_property>
+               <obj_property name="ObjectShortName">.lru</obj_property>
+            </wvobject>
+            <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][1].tag" type="array">
+               <obj_property name="ElementShortName">.tag[23:0]</obj_property>
+               <obj_property name="ObjectShortName">.tag[23:0]</obj_property>
+               <obj_property name="Radix">HEXRADIX</obj_property>
+            </wvobject>
+            <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][1].data" type="array">
+               <obj_property name="ElementShortName">.data[31:0]</obj_property>
+               <obj_property name="ObjectShortName">.data[31:0]</obj_property>
+               <obj_property name="Radix">HEXRADIX</obj_property>
+            </wvobject>
+         </wvobject>
+         <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][0]" type="array">
+            <obj_property name="ElementShortName">[0]</obj_property>
+            <obj_property name="ObjectShortName">[0]</obj_property>
+            <obj_property name="Radix">HEXRADIX</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+            <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][0].valid" type="logic">
+               <obj_property name="ElementShortName">.valid</obj_property>
+               <obj_property name="ObjectShortName">.valid</obj_property>
+            </wvobject>
+            <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][0].lru" type="logic">
+               <obj_property name="ElementShortName">.lru</obj_property>
+               <obj_property name="ObjectShortName">.lru</obj_property>
+            </wvobject>
+            <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][0].tag" type="array">
+               <obj_property name="ElementShortName">.tag[23:0]</obj_property>
+               <obj_property name="ObjectShortName">.tag[23:0]</obj_property>
+               <obj_property name="Radix">HEXRADIX</obj_property>
+            </wvobject>
+            <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/cache_memory_L1[0][0].data" type="array">
+               <obj_property name="ElementShortName">.data[31:0]</obj_property>
+               <obj_property name="ObjectShortName">.data[31:0]</obj_property>
+               <obj_property name="Radix">HEXRADIX</obj_property>
+            </wvobject>
+         </wvobject>
       </wvobject>
       <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L1_mem/we_L2" type="logic">
          <obj_property name="ElementShortName">we_L2</obj_property>
@@ -54,22 +103,26 @@
          <obj_property name="ElementShortName">[0][3:0]</obj_property>
          <obj_property name="ObjectShortName">[0][3:0]</obj_property>
          <obj_property name="isExpanded"></obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
          <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/cache_L2[0][3]" type="array">
             <obj_property name="ElementShortName">[3]</obj_property>
             <obj_property name="ObjectShortName">[3]</obj_property>
+            <obj_property name="Radix">HEXRADIX</obj_property>
          </wvobject>
          <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/cache_L2[0][2]" type="array">
             <obj_property name="ElementShortName">[2]</obj_property>
             <obj_property name="ObjectShortName">[2]</obj_property>
+            <obj_property name="Radix">HEXRADIX</obj_property>
          </wvobject>
          <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/cache_L2[0][1]" type="array">
             <obj_property name="ElementShortName">[1]</obj_property>
             <obj_property name="ObjectShortName">[1]</obj_property>
+            <obj_property name="Radix">HEXRADIX</obj_property>
          </wvobject>
          <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/cache_L2[0][0]" type="array">
             <obj_property name="ElementShortName">[0]</obj_property>
             <obj_property name="ObjectShortName">[0]</obj_property>
-            <obj_property name="isExpanded"></obj_property>
+            <obj_property name="Radix">HEXRADIX</obj_property>
          </wvobject>
       </wvobject>
       <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/we_dmem" type="logic">
@@ -86,6 +139,7 @@
       <wvobject fp_name="/tb/dut/dmem/RAM[0]" type="array">
          <obj_property name="ElementShortName">[0][31:0]</obj_property>
          <obj_property name="ObjectShortName">[0][31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
       </wvobject>
    </wvobject>
    <wvobject fp_name="group170" type="group">
@@ -95,6 +149,7 @@
       <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/registerfile/rf[2]" type="array">
          <obj_property name="ElementShortName">[2][31:0]</obj_property>
          <obj_property name="ObjectShortName">[2][31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
       </wvobject>
       <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/load_operation_in" type="logic">
          <obj_property name="ElementShortName">load_operation_in</obj_property>
@@ -103,6 +158,34 @@
       <wvobject fp_name="/tb/dut/load_operation_top" type="logic">
          <obj_property name="ElementShortName">load_operation_top</obj_property>
          <obj_property name="ObjectShortName">load_operation_top</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/stall" type="logic">
+         <obj_property name="ElementShortName">stall</obj_property>
+         <obj_property name="ObjectShortName">stall</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb/dut/dmem/wd" type="array">
+         <obj_property name="ElementShortName">wd[31:0]</obj_property>
+         <obj_property name="ObjectShortName">wd[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb/dut/dmem/rd" type="array">
+         <obj_property name="ElementShortName">rd[31:0]</obj_property>
+         <obj_property name="ObjectShortName">rd[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/data_from_mem" type="array">
+         <obj_property name="ElementShortName">data_from_mem[31:0]</obj_property>
+         <obj_property name="ObjectShortName">data_from_mem[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/valid_data_from_L2" type="logic">
+         <obj_property name="ElementShortName">valid_data_from_L2</obj_property>
+         <obj_property name="ObjectShortName">valid_data_from_L2</obj_property>
+      </wvobject>
+      <wvobject fp_name="/tb/dut/rv_pipeline/datapath_module/cache_subsys/L2_mem/index" type="array">
+         <obj_property name="ElementShortName">index[5:0]</obj_property>
+         <obj_property name="ObjectShortName">index[5:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
       </wvobject>
    </wvobject>
 </wave_config>

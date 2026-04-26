@@ -240,7 +240,7 @@ module L2_cache(
             end
             else begin
                 data_to_mem    <= '0;
-                address_to_mem <= '0;
+                address_to_mem <= 0;
                 we_dmem        <=  0;
             end
 

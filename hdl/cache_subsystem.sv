@@ -21,6 +21,8 @@ module cache_subsystem (
     logic [1:0] cache_hit_s;
 
     logic load_L2_s;
+    logic stall_L2;
+
     logic [31:0] data_to_L2_s;
     logic [31:0] address_to_L2_s, address_s;
     logic [31:0] address_L2;
@@ -30,7 +32,7 @@ module cache_subsystem (
     logic [31:0] data_from_mem_in_s, data_from_mem_in_d;
 
     L1_cache L1_mem(
-        .clk(clk_in),
+        .clk((clk_in & (~stall_L2))),
         .we(we_in),
         .rst(rst_in),
         .valid_load(valid_data_from_L2_s),
@@ -43,7 +45,8 @@ module cache_subsystem (
         .address_to_L2(address_to_L2_s),
         .stall(stall_out),
         .we_L2(we_L2_s),
-        .cache_hit(cache_hit_s)
+        .cache_hit(cache_hit_s),
+        .stall_in(stall_L2)
     );
 
     assign load_L2_s = (cache_hit_s == 2'b01) ? 1 : 0;
@@ -84,7 +87,7 @@ module cache_subsystem (
         .data_from_mem(data_from_mem_in_d),
         .valid_mem(valid_mem_in_d),
         .rd(data_from_L2_s),
-        .stall(),
+        .stall(stall_L2),
         .address_to_mem(address_to_mem_out),
         .data_to_mem(data_to_mem_out),
         .we_dmem(we_dmem_out),

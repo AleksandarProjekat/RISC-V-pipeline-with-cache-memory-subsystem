@@ -13,7 +13,7 @@ logic [31:0] PC_out_s;
 logic [31:0] data_from_mem_in_s;
 logic valid_mem_in_s;
 logic [31:0] data_to_mem_out_s;
-logic [31:0] address_to_mem_out_s;
+logic [31:0] address_to_mem_out_s, address_to_mem_out_d;
 logic we_dmem_out_s;
 logic [1:0] cache_hit_out_s, cache_hit_out_d;
 logic stall_out_s;
@@ -37,6 +37,23 @@ logic load_operation_top;
     .cache_hit_out(cache_hit_out_s),
     .stall_out(stall_out_s)
     );
+
+always_ff @(posedge clk) begin
+    if(reset) begin
+        cache_hit_out_d <= 0;
+        address_to_mem_out_d <= 0;
+    end
+    else begin
+        if(cache_hit_out_s == 2'b01) begin
+            cache_hit_out_d <= 2'b01;
+            address_to_mem_out_d <= address_to_mem_out_s;
+        end
+        else begin
+            cache_hit_out_d <= 2'b01;
+            address_to_mem_out_d <= 0;
+        end
+    end
+end
 
 
 dmem dmem(
