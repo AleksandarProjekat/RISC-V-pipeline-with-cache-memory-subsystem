@@ -10,7 +10,7 @@ module regfile(
     
 logic [31:0] rf[31:0];
 
-assign rf[0] = 'b0;
+//assign rf[0] = 'b0;
 
 always_ff @(negedge clk or posedge rst) begin
     if(rst) begin
